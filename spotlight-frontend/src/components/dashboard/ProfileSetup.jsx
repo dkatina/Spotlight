@@ -1,15 +1,33 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import api from '../../utils/api';
 
 const ProfileSetup = ({ profile, onUpdate }) => {
   const [formData, setFormData] = useState({
     display_name: profile?.profile?.display_name || '',
     bio: profile?.profile?.bio || '',
-    avatar_url: profile?.profile?.avatar_url || '',
     is_public: profile?.profile?.is_public ?? true,
   });
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [removeAvatar, setRemoveAvatar] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const fileInputRef = useRef(null);
+
+  // Get current avatar URL for display
+  const currentAvatarUrl = profile?.profile?.avatar_url || null;
+  const getAvatarUrl = () => {
+    if (avatarPreview) return avatarPreview;
+    if (!currentAvatarUrl) return null;
+    // If it's a relative path (uploaded file), construct full URL
+    if (currentAvatarUrl.startsWith('/api/uploads/')) {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000/api';
+      return baseUrl.replace('/api', '') + currentAvatarUrl;
+    }
+    // Otherwise it's an external URL
+    return currentAvatarUrl;
+  };
+  const displayAvatarUrl = getAvatarUrl();
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -19,14 +37,76 @@ const ProfileSetup = ({ profile, onUpdate }) => {
     });
   };
 
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        setMessage('Invalid file type. Please upload a PNG, JPG, GIF, or WebP image.');
+        return;
+      }
+
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setMessage('File size too large. Please upload an image smaller than 5MB.');
+        return;
+      }
+
+      setAvatarFile(file);
+      setRemoveAvatar(false); // Cancel removal if user selects a new file
+      setMessage('');
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    setRemoveAvatar(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
 
     try {
-      await api.put('/profiles/me', formData);
+      const submitData = new FormData();
+      submitData.append('display_name', formData.display_name);
+      submitData.append('bio', formData.bio);
+      submitData.append('is_public', formData.is_public);
+      
+      if (avatarFile) {
+        submitData.append('avatar', avatarFile);
+      }
+      
+      if (removeAvatar) {
+        submitData.append('remove_avatar', 'true');
+      }
+
+      await api.put('/profiles/me', submitData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
       setMessage('Profile updated successfully!');
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      setRemoveAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       onUpdate();
     } catch (error) {
       setMessage(error.response?.data?.error || 'Failed to update profile');
@@ -83,18 +163,41 @@ const ProfileSetup = ({ profile, onUpdate }) => {
         </div>
 
         <div>
-          <label htmlFor="avatar_url" className="block text-sm font-medium text-gray-300 mb-2">
-            Avatar URL
+          <label htmlFor="avatar" className="block text-sm font-medium text-gray-300 mb-2">
+            Avatar
           </label>
+          
+          {/* Avatar Preview */}
+          {(displayAvatarUrl || avatarPreview) && (
+            <div className="mb-4 flex items-center gap-4">
+              <img
+                src={displayAvatarUrl}
+                alt="Avatar preview"
+                className="w-24 h-24 rounded-full object-cover border-2 border-white/20"
+              />
+              <button
+                type="button"
+                onClick={handleRemoveAvatar}
+                className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-lg text-red-200 text-sm transition-colors"
+              >
+                Remove Avatar
+              </button>
+            </div>
+          )}
+
+          {/* File Input */}
           <input
-            id="avatar_url"
-            name="avatar_url"
-            type="url"
-            value={formData.avatar_url}
-            onChange={handleChange}
-            className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-spotify-green focus:border-transparent"
-            placeholder="https://example.com/avatar.jpg"
+            id="avatar"
+            name="avatar"
+            type="file"
+            ref={fileInputRef}
+            accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+            onChange={handleAvatarChange}
+            className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-spotify-green file:text-white hover:file:bg-[#1ed760] file:cursor-pointer focus:outline-none focus:ring-2 focus:ring-spotify-green focus:border-transparent"
           />
+          <p className="mt-2 text-xs text-gray-400">
+            Supported formats: PNG, JPG, GIF, WebP (max 5MB)
+          </p>
         </div>
 
         <div className="flex items-center">

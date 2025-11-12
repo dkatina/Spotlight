@@ -44,14 +44,27 @@ const PublicProfile = () => {
 
   const { profile: profileData, social_links, music_showcase } = profile;
 
+  // Get avatar URL - handle both uploaded files and external URLs
+  const getAvatarUrl = () => {
+    if (!profileData.avatar_url) return null;
+    // If it's a relative path (uploaded file), construct full URL
+    if (profileData.avatar_url.startsWith('/api/uploads/')) {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000/api';
+      return baseUrl.replace('/api', '') + profileData.avatar_url;
+    }
+    // Otherwise it's an external URL
+    return profileData.avatar_url;
+  };
+  const avatarUrl = getAvatarUrl();
+
   return (
     <div className="min-h-screen bg-gradient-dark">
       <div className="max-w-2xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-8">
-          {profileData.avatar_url && (
+          {avatarUrl && (
             <img
-              src={profileData.avatar_url}
+              src={avatarUrl}
               alt={profileData.display_name || username}
               className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-white/20 object-cover"
             />

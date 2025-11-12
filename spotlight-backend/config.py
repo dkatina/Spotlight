@@ -25,6 +25,11 @@ class Config:
     
     # CORS Configuration
     CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'http://127.0.0.1:5173,http://localhost:5173,http://localhost:3000').split(',')
+    
+    # File Upload Configuration
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads', 'avatars')
+    MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5MB max file size
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 class DevelopmentConfig(Config):
     """Development configuration"""

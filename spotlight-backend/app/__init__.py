@@ -105,6 +105,14 @@ def create_app(config_name='default'):
     app.register_blueprint(social_links_bp, url_prefix='/api/social-links')
     app.register_blueprint(music_showcase_bp, url_prefix='/api/music-showcase')
     
+    # Serve uploaded avatar files
+    @app.route('/api/uploads/avatars/<filename>', methods=['GET'])
+    def serve_avatar(filename):
+        """Serve uploaded avatar files"""
+        from flask import send_from_directory
+        upload_folder = app.config['UPLOAD_FOLDER']
+        return send_from_directory(upload_folder, filename)
+    
     # Health check endpoint
     @app.route('/api/health')
     def health_check():

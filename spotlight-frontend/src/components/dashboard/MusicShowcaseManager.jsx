@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../utils/api';
 
 const MusicShowcaseManager = ({ profile, onUpdate }) => {
@@ -7,6 +7,7 @@ const MusicShowcaseManager = ({ profile, onUpdate }) => {
   const [loading, setLoading] = useState(true);
   const [browsing, setBrowsing] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState(null);
+  const fetchingAlbums = useRef(false);
 
   useEffect(() => {
     fetchShowcase();
@@ -15,32 +16,47 @@ const MusicShowcaseManager = ({ profile, onUpdate }) => {
   const fetchShowcase = async () => {
     try {
       const response = await api.get('/music-showcase');
-      setShowcase(response.data.items);
+      if (response.data && response.data.items) {
+        setShowcase(response.data.items);
+      } else {
+        setShowcase([]);
+      }
     } catch (error) {
       console.error('Failed to fetch showcase:', error);
+      setShowcase([]);
     } finally {
       setLoading(false);
     }
   };
 
   const fetchAlbums = async () => {
+    // Prevent duplicate requests
+    if (fetchingAlbums.current) {
+      return;
+    }
+    
+    fetchingAlbums.current = true;
     setBrowsing(true);
     try {
       const response = await api.get('/spotify/user-albums?limit=50');
-      setAlbums(response.data.items);
+      setAlbums(response.data.items || []);
+      // Keep browsing true so albums stay visible
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to fetch albums');
+      const errorMessage = error.response?.data?.error || 'Failed to fetch albums';
+      alert(errorMessage);
+      setBrowsing(false); // Only hide on error
     } finally {
-      setBrowsing(false);
+      fetchingAlbums.current = false;
     }
   };
 
   const handleAddToShowcase = async (spotifyId) => {
     try {
       await api.post('/music-showcase', { spotify_item_id: spotifyId });
-      fetchShowcase();
-      onUpdate();
       setSelectedAlbum(null);
+      // Fetch showcase first, then update parent
+      await fetchShowcase();
+      onUpdate();
       alert('Added to showcase!');
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to add to showcase');
@@ -52,7 +68,8 @@ const MusicShowcaseManager = ({ profile, onUpdate }) => {
     
     try {
       await api.delete(`/music-showcase/${id}`);
-      fetchShowcase();
+      // Fetch showcase first, then update parent
+      await fetchShowcase();
       onUpdate();
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to remove item');
@@ -98,26 +115,35 @@ const MusicShowcaseManager = ({ profile, onUpdate }) => {
 
       {browsing && (
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Your Spotify Albums</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
-            {albums.map((album) => (
-              <div
-                key={album.spotify_id}
-                className="bg-white/5 rounded-lg p-4 border border-white/20 hover:border-spotify-green transition-colors cursor-pointer"
-                onClick={() => setSelectedAlbum(album)}
-              >
-                {album.image_url && (
-                  <img
-                    src={album.image_url}
-                    alt={album.item_name}
-                    className="w-full aspect-square object-cover rounded-lg mb-3"
-                  />
-                )}
-                <p className="text-white font-medium text-sm truncate">{album.item_name}</p>
-                <p className="text-gray-400 text-xs truncate">{album.artist_names}</p>
-              </div>
-            ))}
-          </div>
+          <h3 className="text-lg font-semibold text-white mb-4">Your Released Albums</h3>
+          {albums.length === 0 ? (
+            <div className="bg-white/5 rounded-lg p-8 border border-white/20 text-center">
+              <p className="text-gray-300 text-lg mb-2">No albums released yet</p>
+              <p className="text-gray-400 text-sm">
+                You haven't posted any albums, singles, or EPs on Spotify yet. Once you release music on Spotify, it will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+              {albums.map((album) => (
+                <div
+                  key={album.spotify_id}
+                  className="bg-white/5 rounded-lg p-4 border border-white/20 hover:border-spotify-green transition-colors cursor-pointer"
+                  onClick={() => setSelectedAlbum(album)}
+                >
+                  {album.image_url && (
+                    <img
+                      src={album.image_url}
+                      alt={album.item_name}
+                      className="w-full aspect-square object-cover rounded-lg mb-3"
+                    />
+                  )}
+                  <p className="text-white font-medium text-sm truncate">{album.item_name}</p>
+                  <p className="text-gray-400 text-xs truncate">{album.artist_names}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -200,6 +226,3 @@ const MusicShowcaseManager = ({ profile, onUpdate }) => {
 };
 
 export default MusicShowcaseManager;
-
-
-

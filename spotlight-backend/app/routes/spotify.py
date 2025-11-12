@@ -1,10 +1,9 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
-from app.models import User, SpotifyConnection, MusicShowcase
+from app.models import User, SpotifyConnection
 from app.services import SpotifyService
 from datetime import datetime, timedelta
-import time
 
 spotify_bp = Blueprint('spotify', __name__)
 
@@ -34,19 +33,14 @@ def get_auth_url():
             auth_url:
               type: string
               example: https://accounts.spotify.com/authorize?client_id=...
-            redirect_uri:
-              type: string
-              example: http://127.0.0.1:5173/auth/spotify/callback
       401:
         description: Unauthorized
     """
     state = request.args.get('state')
     auth_url = SpotifyService.get_auth_url(state=state)
-    redirect_uri = current_app.config.get('SPOTIFY_REDIRECT_URI', '')
     
     return jsonify({
-        'auth_url': auth_url,
-        'redirect_uri': redirect_uri  # Debug: show what redirect URI is being used
+        'auth_url': auth_url
     }), 200
 
 @spotify_bp.route('/callback', methods=['POST'])
@@ -364,52 +358,3 @@ def get_album_details(album_id):
         'total_tracks': album_data.get('total_tracks', 0),
         'tracks': album_data.get('tracks', {}).get('items', [])
     }), 200
-
-@spotify_bp.route('/disconnect', methods=['DELETE'])
-@jwt_required()
-def disconnect_spotify():
-    """
-    Disconnect Spotify
-    Remove Spotify connection for the current user
-    ---
-    tags:
-      - Spotify
-    security:
-      - Bearer: []
-    responses:
-      200:
-        description: Spotify disconnected successfully
-        schema:
-          type: object
-          properties:
-            message:
-              type: string
-              example: Spotify disconnected successfully
-      401:
-        description: Unauthorized
-      404:
-        description: Spotify connection not found
-      500:
-        description: Failed to disconnect Spotify
-    """
-    current_user_id = get_jwt_identity()
-    connection = SpotifyConnection.query.filter_by(user_id=current_user_id).first()
-    
-    if not connection:
-        return jsonify({'error': 'Spotify connection not found'}), 404
-    
-    try:
-        # Delete all music showcase items since they depend on Spotify
-        showcase_items = MusicShowcase.query.filter_by(user_id=current_user_id).all()
-        for item in showcase_items:
-            db.session.delete(item)
-        
-        # Delete the Spotify connection
-        db.session.delete(connection)
-        db.session.commit()
-        return jsonify({
-            'message': 'Spotify disconnected successfully'
-        }), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': 'Failed to disconnect Spotify', 'details': str(e)}), 500

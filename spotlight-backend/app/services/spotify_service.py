@@ -1,7 +1,6 @@
 import requests
 import base64
 from datetime import datetime, timedelta
-from urllib.parse import urlencode
 from flask import current_app
 from app import db
 from app.models import SpotifyConnection
@@ -34,8 +33,7 @@ class SpotifyService:
             params['state'] = state
         
         auth_url = current_app.config['SPOTIFY_AUTH_URL']
-        # Use urlencode to properly encode the redirect_uri
-        query_string = urlencode(params)
+        query_string = '&'.join([f'{k}={v}' for k, v in params.items()])
         
         return f"{auth_url}?{query_string}"
     

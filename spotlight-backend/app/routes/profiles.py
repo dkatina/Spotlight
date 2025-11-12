@@ -155,15 +155,17 @@ def get_my_profile():
     # Get music showcase
     showcase_items = [item.to_dict() for item in user.music_showcase.order_by(MusicShowcase.position).all()]
     
-    # Get Spotify connection status
+    # Get Spotify connection status and data
     spotify_connected = user.spotify_connection is not None
+    spotify_connection = user.spotify_connection.to_dict() if user.spotify_connection else None
     
     return jsonify({
         'user': user.to_dict(),
         'profile': user.profile.to_dict(),
         'social_links': social_links,
         'music_showcase': showcase_items,
-        'spotify_connected': spotify_connected
+        'spotify_connected': spotify_connected,
+        'spotify_connection': spotify_connection
     }), 200
 
 @profiles_bp.route('/me', methods=['PUT'])

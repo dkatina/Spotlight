@@ -118,6 +118,85 @@ class SpotifyService:
         return response.json()
     
     @staticmethod
+    def search_artist(access_token, artist_name, limit=1):
+        """Search for an artist by name - returns first match or None"""
+        headers = {
+            'Authorization': f'Bearer {access_token}'
+        }
+        
+        params = {
+            'q': artist_name,
+            'type': 'artist',
+            'limit': limit
+        }
+        
+        response = requests.get(
+            f"{current_app.config['SPOTIFY_API_BASE_URL']}/search",
+            headers=headers,
+            params=params
+        )
+        
+        if response.status_code != 200:
+            return None
+        
+        data = response.json()
+        artists = data.get('artists', {}).get('items', [])
+        
+        if artists:
+            return artists[0]  # Return the first matching artist
+        
+        return None
+    
+    @staticmethod
+    def search_artists(access_token, query, limit=10):
+        """Search for artists by name - returns list of artists"""
+        headers = {
+            'Authorization': f'Bearer {access_token}'
+        }
+        
+        params = {
+            'q': query,
+            'type': 'artist',
+            'limit': limit
+        }
+        
+        response = requests.get(
+            f"{current_app.config['SPOTIFY_API_BASE_URL']}/search",
+            headers=headers,
+            params=params
+        )
+        
+        if response.status_code != 200:
+            return None
+        
+        data = response.json()
+        return data.get('artists', {})
+    
+    @staticmethod
+    def get_artist_albums(access_token, artist_id, limit=50, offset=0):
+        """Get albums by a specific artist"""
+        headers = {
+            'Authorization': f'Bearer {access_token}'
+        }
+        
+        params = {
+            'limit': limit,
+            'offset': offset,
+            'include_groups': 'album,single,ep'
+        }
+        
+        response = requests.get(
+            f"{current_app.config['SPOTIFY_API_BASE_URL']}/artists/{artist_id}/albums",
+            headers=headers,
+            params=params
+        )
+        
+        if response.status_code != 200:
+            return None
+        
+        return response.json()
+    
+    @staticmethod
     def get_user_albums(access_token, limit=50, offset=0):
         """Get user's saved albums"""
         headers = {

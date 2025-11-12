@@ -96,6 +96,7 @@ class SpotifyConnection(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, unique=True)
     spotify_user_id = db.Column(db.String(100), nullable=False)
+    artist_id = db.Column(db.String(100), nullable=True)
     access_token = db.Column(db.Text, nullable=False)
     refresh_token = db.Column(db.Text, nullable=False)
     token_expires_at = db.Column(db.DateTime)
@@ -114,6 +115,7 @@ class SpotifyConnection(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'spotify_user_id': self.spotify_user_id,
+            'artist_id': self.artist_id,
             'connected_at': self.connected_at.isoformat() if self.connected_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

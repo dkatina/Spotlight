@@ -127,6 +127,7 @@ def handle_callback():
         connection.access_token = token_data['access_token']
         connection.refresh_token = token_data['refresh_token']
         connection.token_expires_at = expires_at
+        # Preserve existing artist_id if it exists
         connection.updated_at = datetime.utcnow()
     else:
         connection = SpotifyConnection(
@@ -147,6 +148,219 @@ def handle_callback():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Failed to save connection', 'details': str(e)}), 500
+
+@spotify_bp.route('/artist-id', methods=['PUT'])
+@jwt_required()
+def update_artist_id():
+    """
+    Update Artist ID
+    Manually set or update the artist_id for the user's Spotify connection
+    Set to null or empty string to disconnect artist
+    ---
+    tags:
+      - Spotify
+    security:
+      - Bearer: []
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - artist_id
+          properties:
+            artist_id:
+              type: string
+              nullable: true
+              description: Spotify artist ID (set to null or empty to disconnect)
+              example: 4Z8W4fKeB5YxbusRsdQVPb
+    responses:
+      200:
+        description: Artist ID updated successfully
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Artist ID updated successfully
+            connection:
+              type: object
+      400:
+        description: Invalid request or missing artist_id
+      401:
+        description: Spotify not connected or unauthorized
+      404:
+        description: Connection not found
+    """
+    current_user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    if not data or 'artist_id' not in data:
+        return jsonify({'error': 'artist_id is required'}), 400
+    
+    artist_id = data.get('artist_id')
+    # Allow null or empty string to clear artist_id
+    if artist_id == '':
+        artist_id = None
+    
+    # Get connection
+    connection = SpotifyConnection.query.filter_by(user_id=current_user_id).first()
+    
+    if not connection:
+        return jsonify({'error': 'Spotify not connected. Please connect your Spotify account first.'}), 404
+    
+    # Update artist_id
+    connection.artist_id = artist_id
+    connection.updated_at = datetime.utcnow()
+    
+    try:
+        db.session.commit()
+        message = 'Artist ID disconnected successfully' if artist_id is None else 'Artist ID updated successfully'
+        return jsonify({
+            'message': message,
+            'connection': connection.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to update artist ID', 'details': str(e)}), 500
+
+@spotify_bp.route('/artist-id', methods=['DELETE'])
+@jwt_required()
+def disconnect_artist_id():
+    """
+    Disconnect Artist ID
+    Remove the artist_id from the user's Spotify connection
+    ---
+    tags:
+      - Spotify
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Artist ID disconnected successfully
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Artist ID disconnected successfully
+            connection:
+              type: object
+      401:
+        description: Spotify not connected or unauthorized
+      404:
+        description: Connection not found
+    """
+    current_user_id = get_jwt_identity()
+    
+    # Get connection
+    connection = SpotifyConnection.query.filter_by(user_id=current_user_id).first()
+    
+    if not connection:
+        return jsonify({'error': 'Spotify not connected. Please connect your Spotify account first.'}), 404
+    
+    # Clear artist_id
+    connection.artist_id = None
+    connection.updated_at = datetime.utcnow()
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            'message': 'Artist ID disconnected successfully',
+            'connection': connection.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to disconnect artist ID', 'details': str(e)}), 500
+
+@spotify_bp.route('/search-artist', methods=['GET'])
+@jwt_required()
+def search_artist():
+    """
+    Search for Artists
+    Search for artists by name to help users find their artist ID
+    ---
+    tags:
+      - Spotify
+    security:
+      - Bearer: []
+    parameters:
+      - in: query
+        name: q
+        type: string
+        required: true
+        description: Artist name to search for
+        example: Radiohead
+      - in: query
+        name: limit
+        type: integer
+        required: false
+        default: 10
+        description: Maximum number of results to return
+    responses:
+      200:
+        description: Artists found successfully
+        schema:
+          type: object
+          properties:
+            artists:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  images:
+                    type: array
+                  external_urls:
+                    type: object
+      401:
+        description: Spotify not connected or unauthorized
+      400:
+        description: Missing search query
+    """
+    current_user_id = get_jwt_identity()
+    
+    # Get valid access token
+    access_token = SpotifyService.get_valid_access_token(current_user_id)
+    
+    if not access_token:
+        return jsonify({'error': 'Spotify not connected. Please connect your Spotify account first.'}), 401
+    
+    # Get query parameters
+    query = request.args.get('q')
+    limit = request.args.get('limit', 10, type=int)
+    
+    if not query:
+        return jsonify({'error': 'Search query (q) is required'}), 400
+    
+    # Search for artists using service
+    artists_data = SpotifyService.search_artists(access_token, query, limit=limit)
+    
+    if not artists_data:
+        return jsonify({'error': 'Failed to search for artists'}), 500
+    
+    artists = artists_data.get('items', [])
+    
+    # Format response
+    formatted_artists = []
+    for artist in artists:
+        formatted_artists.append({
+            'id': artist.get('id'),
+            'name': artist.get('name'),
+            'images': artist.get('images', []),
+            'external_urls': artist.get('external_urls', {}),
+            'genres': artist.get('genres', []),
+            'popularity': artist.get('popularity')
+        })
+    
+    return jsonify({
+        'artists': formatted_artists,
+        'total': artists_data.get('total', 0)
+    }), 200
 
 @spotify_bp.route('/user-albums', methods=['GET'])
 @jwt_required()
@@ -219,55 +433,103 @@ def get_user_albums():
     if not access_token:
         return jsonify({'error': 'Spotify not connected. Please connect your Spotify account first.'}), 401
     
+    # Get connection to check for artist_id
+    connection = SpotifyConnection.query.filter_by(user_id=current_user_id).first()
+    
     # Get query parameters
     limit = request.args.get('limit', 50, type=int)
     offset = request.args.get('offset', 0, type=int)
     
-    # Fetch albums from Spotify
-    albums_data = SpotifyService.get_user_albums(access_token, limit=limit, offset=offset)
-    
-    if not albums_data:
-        return jsonify({'error': 'Failed to fetch albums from Spotify'}), 500
-    
-    # Format response
-    items = []
-    for item in albums_data.get('items', []):
-        album = item.get('album', {})
+    # Fetch albums from Spotify - use artist albums if artist_id is available
+    if connection and connection.artist_id:
+        albums_data = SpotifyService.get_artist_albums(access_token, connection.artist_id, limit=limit, offset=offset)
         
-        # Determine item type
-        album_type = album.get('album_type', 'album')
-        if album_type == 'single':
-            item_type = 'single'
-        elif album_type == 'ep':
-            item_type = 'ep'
-        else:
-            item_type = 'album'
+        if not albums_data:
+            return jsonify({'error': 'Failed to fetch artist albums from Spotify'}), 500
         
-        # Get artist names
-        artists = album.get('artists', [])
-        artist_names = ', '.join([artist.get('name', '') for artist in artists])
+        # Format response for artist albums (different structure)
+        items = []
+        for album in albums_data.get('items', []):
+            # Determine item type
+            album_type = album.get('album_type', 'album')
+            if album_type == 'single':
+                item_type = 'single'
+            elif album_type == 'ep':
+                item_type = 'ep'
+            else:
+                item_type = 'album'
+            
+            # Get artist names
+            artists = album.get('artists', [])
+            artist_names = ', '.join([artist.get('name', '') for artist in artists])
+            
+            # Get images
+            images = album.get('images', [])
+            image_url = images[0].get('url', '') if images else None
+            
+            items.append({
+                'spotify_id': album.get('id'),
+                'item_type': item_type,
+                'item_name': album.get('name', ''),
+                'artist_names': artist_names,
+                'image_url': image_url,
+                'spotify_url': album.get('external_urls', {}).get('spotify', ''),
+                'release_date': album.get('release_date', ''),
+                'total_tracks': album.get('total_tracks', 0)
+            })
         
-        # Get images
-        images = album.get('images', [])
-        image_url = images[0].get('url', '') if images else None
+        return jsonify({
+            'items': items,
+            'total': albums_data.get('total', 0),
+            'limit': limit,
+            'offset': offset
+        }), 200
+    else:
+        # Fall back to user's saved albums
+        albums_data = SpotifyService.get_user_albums(access_token, limit=limit, offset=offset)
         
-        items.append({
-            'spotify_id': album.get('id'),
-            'item_type': item_type,
-            'item_name': album.get('name', ''),
-            'artist_names': artist_names,
-            'image_url': image_url,
-            'spotify_url': album.get('external_urls', {}).get('spotify', ''),
-            'release_date': album.get('release_date', ''),
-            'total_tracks': album.get('total_tracks', 0)
-        })
-    
-    return jsonify({
-        'items': items,
-        'total': albums_data.get('total', 0),
-        'limit': limit,
-        'offset': offset
-    }), 200
+        if not albums_data:
+            return jsonify({'error': 'Failed to fetch albums from Spotify'}), 500
+        
+        # Format response for saved albums
+        items = []
+        for item in albums_data.get('items', []):
+            album = item.get('album', {})
+            
+            # Determine item type
+            album_type = album.get('album_type', 'album')
+            if album_type == 'single':
+                item_type = 'single'
+            elif album_type == 'ep':
+                item_type = 'ep'
+            else:
+                item_type = 'album'
+            
+            # Get artist names
+            artists = album.get('artists', [])
+            artist_names = ', '.join([artist.get('name', '') for artist in artists])
+            
+            # Get images
+            images = album.get('images', [])
+            image_url = images[0].get('url', '') if images else None
+            
+            items.append({
+                'spotify_id': album.get('id'),
+                'item_type': item_type,
+                'item_name': album.get('name', ''),
+                'artist_names': artist_names,
+                'image_url': image_url,
+                'spotify_url': album.get('external_urls', {}).get('spotify', ''),
+                'release_date': album.get('release_date', ''),
+                'total_tracks': album.get('total_tracks', 0)
+            })
+        
+        return jsonify({
+            'items': items,
+            'total': albums_data.get('total', 0),
+            'limit': limit,
+            'offset': offset
+        }), 200
 
 @spotify_bp.route('/album/<album_id>', methods=['GET'])
 @jwt_required()

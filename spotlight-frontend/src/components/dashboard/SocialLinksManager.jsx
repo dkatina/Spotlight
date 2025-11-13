@@ -67,53 +67,53 @@ const SocialLinksManager = ({ profile, onUpdate }) => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold text-white">Social Links</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-semibold text-primary-light">Social Links</h2>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="px-4 py-2 bg-spotify-green hover:bg-[#1ed760] text-white rounded-lg transition-colors"
+          className="w-full sm:w-auto px-4 py-2 bg-gradient-primary hover:bg-gradient-primary-hover text-white rounded-xl text-sm sm:text-base transition-all shadow-glow active:scale-95"
         >
           {showAddForm ? 'Cancel' : '+ Add Link'}
         </button>
       </div>
 
       {showAddForm && (
-        <form onSubmit={handleAdd} className="mb-6 p-4 bg-white/5 rounded-lg border border-white/20 space-y-4">
+        <form onSubmit={handleAdd} className="mb-4 sm:mb-6 p-4 sm:p-6 bg-gradient-to-br from-white/5 via-primary/5 to-accent/5 rounded-xl border border-primary/20 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Platform</label>
+            <label className="block text-sm font-medium text-primary-light mb-2">Platform</label>
             <input
               type="text"
               value={formData.platform}
               onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
               required
-              className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-white/5 border border-primary/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary/50 transition-all"
               placeholder="Instagram, TikTok, YouTube, etc."
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">URL</label>
+            <label className="block text-sm font-medium text-primary-light mb-2">URL</label>
             <input
               type="url"
               value={formData.url}
               onChange={(e) => setFormData({ ...formData, url: e.target.value })}
               required
-              className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-white/5 border border-primary/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary/50 transition-all"
               placeholder="https://..."
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Display Text (optional)</label>
+            <label className="block text-sm font-medium text-primary-light mb-2">Display Text (optional)</label>
             <input
               type="text"
               value={formData.display_text}
               onChange={(e) => setFormData({ ...formData, display_text: e.target.value })}
-              className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-white/5 border border-primary/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary/50 transition-all"
               placeholder="Follow me on Instagram"
             />
           </div>
           <button
             type="submit"
-            className="w-full py-2 bg-spotify-green hover:bg-[#1ed760] text-white rounded-lg transition-colors"
+            className="w-full py-2.5 bg-gradient-primary hover:bg-gradient-primary-hover text-white rounded-xl transition-all shadow-glow active:scale-95"
           >
             Add Link
           </button>
@@ -122,20 +122,20 @@ const SocialLinksManager = ({ profile, onUpdate }) => {
 
       <div className="space-y-3">
         {links.length === 0 ? (
-          <p className="text-gray-400 text-center py-8">No social links yet. Add your first link above!</p>
+          <p className="text-primary-light/80 text-center py-8 text-sm sm:text-base">No social links yet. Add your first link above!</p>
         ) : (
           links.map((link) => (
             <div
               key={link.id}
-              className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/20"
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-gradient-to-br from-white/5 via-primary/5 to-accent/5 rounded-xl border border-primary/20 hover:border-primary/50 transition-all hover:shadow-glow"
             >
-              <div>
-                <p className="text-white font-medium">{link.platform}</p>
-                <p className="text-gray-400 text-sm">{link.display_text || link.url}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-medium text-sm sm:text-base">{link.platform}</p>
+                <p className="text-primary-light/70 text-xs sm:text-sm truncate">{link.display_text || link.url}</p>
               </div>
               <button
                 onClick={() => handleDelete(link.id)}
-                className="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-200 rounded transition-colors"
+                className="w-full sm:w-auto px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-200 rounded-xl text-sm transition-all border border-red-500/30"
               >
                 Delete
               </button>

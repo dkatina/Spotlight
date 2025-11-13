@@ -117,11 +117,11 @@ const ProfileSetup = ({ profile, onUpdate }) => {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold text-white mb-6">Profile Settings</h2>
+      <h2 className="text-xl sm:text-2xl font-semibold text-primary-light mb-4 sm:mb-6">Profile Settings</h2>
 
       {message && (
         <div
-          className={`mb-4 p-3 rounded-lg text-sm ${
+          className={`mb-4 p-3 rounded-xl text-sm ${
             message.includes('success')
               ? 'bg-green-500/20 border border-green-500/50 text-green-200'
               : 'bg-red-500/20 border border-red-500/50 text-red-200'
@@ -131,9 +131,9 @@ const ProfileSetup = ({ profile, onUpdate }) => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         <div>
-          <label htmlFor="display_name" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="display_name" className="block text-sm font-medium text-primary-light mb-2">
             Display Name
           </label>
           <input
@@ -142,13 +142,13 @@ const ProfileSetup = ({ profile, onUpdate }) => {
             type="text"
             value={formData.display_name}
             onChange={handleChange}
-            className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-spotify-green focus:border-transparent"
+            className="w-full px-4 py-3 bg-white/5 border border-primary/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary/50 transition-all"
             placeholder="Your Artist Name"
           />
         </div>
 
         <div>
-          <label htmlFor="bio" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="bio" className="block text-sm font-medium text-primary-light mb-2">
             Bio
           </label>
           <textarea
@@ -157,28 +157,28 @@ const ProfileSetup = ({ profile, onUpdate }) => {
             value={formData.bio}
             onChange={handleChange}
             rows={4}
-            className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-spotify-green focus:border-transparent resize-none"
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none transition-all"
             placeholder="Tell us about yourself..."
           />
         </div>
 
         <div>
-          <label htmlFor="avatar" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="avatar" className="block text-sm font-medium text-primary-light mb-2">
             Avatar
           </label>
           
           {/* Avatar Preview */}
           {(displayAvatarUrl || avatarPreview) && (
-            <div className="mb-4 flex items-center gap-4">
+            <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <img
                 src={displayAvatarUrl}
                 alt="Avatar preview"
-                className="w-24 h-24 rounded-full object-cover border-2 border-white/20"
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-white/10 shadow-glow"
               />
               <button
                 type="button"
                 onClick={handleRemoveAvatar}
-                className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-lg text-red-200 text-sm transition-colors"
+                className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-xl text-red-200 text-sm transition-all"
               >
                 Remove Avatar
               </button>
@@ -193,9 +193,9 @@ const ProfileSetup = ({ profile, onUpdate }) => {
             ref={fileInputRef}
             accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
             onChange={handleAvatarChange}
-            className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-spotify-green file:text-white hover:file:bg-[#1ed760] file:cursor-pointer focus:outline-none focus:ring-2 focus:ring-spotify-green focus:border-transparent"
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gradient-primary file:text-white hover:file:bg-gradient-primary-hover file:cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
           />
-          <p className="mt-2 text-xs text-gray-400">
+          <p className="mt-2 text-xs text-gray-500">
             Supported formats: PNG, JPG, GIF, WebP (max 5MB)
           </p>
         </div>
@@ -207,9 +207,9 @@ const ProfileSetup = ({ profile, onUpdate }) => {
             type="checkbox"
             checked={formData.is_public}
             onChange={handleChange}
-            className="w-4 h-4 text-spotify-green bg-white/5 border-white/20 rounded focus:ring-spotify-green"
+            className="w-4 h-4 text-primary bg-white/5 border-white/10 rounded focus:ring-primary focus:ring-2"
           />
-          <label htmlFor="is_public" className="ml-2 text-sm text-gray-300">
+          <label htmlFor="is_public" className="ml-2 text-sm text-primary-light">
             Make profile public
           </label>
         </div>
@@ -217,7 +217,7 @@ const ProfileSetup = ({ profile, onUpdate }) => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 bg-spotify-green hover:bg-[#1ed760] text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3 bg-gradient-primary hover:bg-gradient-primary-hover text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-glow active:scale-95"
         >
           {loading ? 'Saving...' : 'Save Profile'}
         </button>

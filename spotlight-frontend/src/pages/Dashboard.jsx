@@ -45,27 +45,27 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-dark">
       {/* Header */}
-      <header className="bg-black/30 backdrop-blur-lg border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
+      <header className="bg-bg-primary/80 backdrop-blur-xl border-b border-white/10 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Spotlight Dashboard</h1>
-              <p className="text-gray-400 text-sm">Welcome, {user?.username}</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-primary-light">Spotlight Dashboard</h1>
+              <p className="text-primary-light text-xs sm:text-sm">Welcome, <span className="text-accent font-semibold">{user?.username}</span></p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
               {profile?.profile?.is_public && (
                 <a
                   href={`/${user?.username}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-spotify-green hover:text-[#1ed760]"
+                  className="text-xs sm:text-sm text-primary hover:text-primary-light font-medium transition-colors"
                 >
                   View Profile
                 </a>
               )}
               <button
                 onClick={logout}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl text-sm transition-all border border-white/10"
               >
                 Logout
               </button>
@@ -75,16 +75,16 @@ const Dashboard = () => {
       </header>
 
       {/* Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex space-x-1 bg-white/5 rounded-lg p-1 mb-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="flex flex-wrap sm:flex-nowrap gap-1 sm:gap-1 bg-white/5 rounded-xl p-1 mb-4 sm:mb-6">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 sm:flex-none py-2 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                 activeTab === tab.id
-                  ? 'bg-spotify-green text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-white/10'
+                  ? 'bg-gradient-primary text-white shadow-glow'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
             >
               {tab.label}
@@ -93,7 +93,7 @@ const Dashboard = () => {
         </div>
 
         {/* Tab Content */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+        <div className="bg-gradient-to-br from-white/5 via-primary/5 to-accent/5 backdrop-blur-xl rounded-2xl p-4 sm:p-6 border border-primary/20 shadow-glow">
           {activeTab === 'profile' && (
             <ProfileSetup profile={profile} onUpdate={fetchProfile} />
           )}

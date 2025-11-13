@@ -115,12 +115,20 @@ const MusicShowcaseManager = ({ profile, onUpdate }) => {
 
       {browsing && (
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Your Released Albums</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">
+            {profile?.spotify_connection?.artist_id ? 'Your Released Albums' : 'Your Liked Albums'}
+          </h3>
           {albums.length === 0 ? (
             <div className="bg-white/5 rounded-lg p-8 border border-white/20 text-center">
-              <p className="text-gray-300 text-lg mb-2">No albums released yet</p>
+              <p className="text-gray-300 text-lg mb-2">
+                {profile?.spotify_connection?.artist_id 
+                  ? 'No albums released yet' 
+                  : 'No liked albums yet'}
+              </p>
               <p className="text-gray-400 text-sm">
-                You haven't posted any albums, singles, or EPs on Spotify yet. Once you release music on Spotify, it will appear here.
+                {profile?.spotify_connection?.artist_id
+                  ? 'You haven\'t posted any albums, singles, or EPs on Spotify yet. Once you release music on Spotify, it will appear here.'
+                  : 'You haven\'t saved any albums to your Spotify library yet. Like albums on Spotify to see them here.'}
               </p>
             </div>
           ) : (

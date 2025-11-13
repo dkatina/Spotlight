@@ -173,6 +173,32 @@ class SpotifyService:
         return data.get('artists', {})
     
     @staticmethod
+    def search_albums(access_token, query, limit=50, offset=0):
+        """Search for albums by name - returns list of albums"""
+        headers = {
+            'Authorization': f'Bearer {access_token}'
+        }
+        
+        params = {
+            'q': query,
+            'type': 'album',
+            'limit': limit,
+            'offset': offset
+        }
+        
+        response = requests.get(
+            f"{current_app.config['SPOTIFY_API_BASE_URL']}/search",
+            headers=headers,
+            params=params
+        )
+        
+        if response.status_code != 200:
+            return None
+        
+        data = response.json()
+        return data.get('albums', {})
+    
+    @staticmethod
     def get_artist_albums(access_token, artist_id, limit=50, offset=0):
         """Get albums by a specific artist"""
         headers = {

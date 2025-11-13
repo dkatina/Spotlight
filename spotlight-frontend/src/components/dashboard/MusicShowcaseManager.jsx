@@ -7,7 +7,11 @@ const MusicShowcaseManager = ({ profile, onUpdate }) => {
   const [loading, setLoading] = useState(true);
   const [browsing, setBrowsing] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
   const fetchingAlbums = useRef(false);
+  const searchTimeout = useRef(null);
 
   useEffect(() => {
     fetchShowcase();
@@ -37,6 +41,9 @@ const MusicShowcaseManager = ({ profile, onUpdate }) => {
     
     fetchingAlbums.current = true;
     setBrowsing(true);
+    setSearchQuery(''); // Clear search when fetching new albums
+    setSearching(false);
+    setSearchResults([]);
     try {
       const response = await api.get('/spotify/user-albums?limit=50');
       setAlbums(response.data.items || []);
@@ -49,6 +56,49 @@ const MusicShowcaseManager = ({ profile, onUpdate }) => {
       fetchingAlbums.current = false;
     }
   };
+
+  const searchSpotifyAlbums = async (query) => {
+    if (!query.trim()) {
+      setSearching(false);
+      setSearchResults([]);
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const response = await api.get('/spotify/search-albums', {
+        params: { q: query, limit: 50 }
+      });
+      setSearchResults(response.data.items || []);
+    } catch (error) {
+      alert(error.response?.data?.error || 'Failed to search albums');
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  // Debounced search
+  useEffect(() => {
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
+
+    if (searchQuery.trim()) {
+      searchTimeout.current = setTimeout(() => {
+        searchSpotifyAlbums(searchQuery);
+      }, 500); // 500ms debounce
+    } else {
+      setSearching(false);
+      setSearchResults([]);
+    }
+
+    return () => {
+      if (searchTimeout.current) {
+        clearTimeout(searchTimeout.current);
+      }
+    };
+  }, [searchQuery]);
 
   const handleAddToShowcase = async (spotifyId) => {
     try {
@@ -104,7 +154,12 @@ const MusicShowcaseManager = ({ profile, onUpdate }) => {
           )}
           {browsing && (
             <button
-              onClick={() => setBrowsing(false)}
+              onClick={() => {
+                setBrowsing(false);
+                setSearchQuery(''); // Clear search when canceling
+                setSearching(false);
+                setSearchResults([]);
+              }}
               className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
             >
               Cancel
@@ -115,25 +170,125 @@ const MusicShowcaseManager = ({ profile, onUpdate }) => {
 
       {browsing && (
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-white mb-4">
-            {profile?.spotify_connection?.artist_id ? 'Your Released Albums' : 'Your Liked Albums'}
-          </h3>
-          {albums.length === 0 ? (
-            <div className="bg-white/5 rounded-lg p-8 border border-white/20 text-center">
-              <p className="text-gray-300 text-lg mb-2">
-                {profile?.spotify_connection?.artist_id 
-                  ? 'No albums released yet' 
-                  : 'No liked albums yet'}
-              </p>
-              <p className="text-gray-400 text-sm">
-                {profile?.spotify_connection?.artist_id
-                  ? 'You haven\'t posted any albums, singles, or EPs on Spotify yet. Once you release music on Spotify, it will appear here.'
-                  : 'You haven\'t saved any albums to your Spotify library yet. Like albums on Spotify to see them here.'}
-              </p>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">
+              {profile?.spotify_connection?.artist_id ? 'Your Released Albums' : 'Your Liked Albums'}
+            </h3>
+          </div>
+          
+          {/* Search Input */}
+          <div className="mb-4">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search all of Spotify for albums..."
+                className="w-full px-4 py-2 pl-10 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-spotify-green focus:border-transparent"
+              />
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSearching(false);
+                    setSearchResults([]);
+                  }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                  </svg>
+                </button>
+              )}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
-              {albums.map((album) => (
+          </div>
+
+          {/* Show search results or liked albums */}
+          {(() => {
+            // If searching, show search results
+            if (searchQuery.trim()) {
+              if (searching) {
+                return (
+                  <div className="bg-white/5 rounded-lg p-8 border border-white/20 text-center">
+                    <p className="text-gray-300 text-lg mb-2">Searching...</p>
+                    <p className="text-gray-400 text-sm">Finding albums on Spotify...</p>
+                  </div>
+                );
+              }
+
+              if (searchResults.length === 0) {
+                return (
+                  <div className="bg-white/5 rounded-lg p-8 border border-white/20 text-center">
+                    <p className="text-gray-300 text-lg mb-2">No albums found</p>
+                    <p className="text-gray-400 text-sm">
+                      No albums match "{searchQuery}". Try a different search term.
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <div>
+                  <p className="text-gray-400 text-sm mb-4">
+                    Search results for "{searchQuery}" ({searchResults.length} found)
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                    {searchResults.map((album) => (
+                      <div
+                        key={album.spotify_id}
+                        className="bg-white/5 rounded-lg p-4 border border-white/20 hover:border-spotify-green transition-colors cursor-pointer"
+                        onClick={() => setSelectedAlbum(album)}
+                      >
+                        {album.image_url && (
+                          <img
+                            src={album.image_url}
+                            alt={album.item_name}
+                            className="w-full aspect-square object-cover rounded-lg mb-3"
+                          />
+                        )}
+                        <p className="text-white font-medium text-sm truncate">{album.item_name}</p>
+                        <p className="text-gray-400 text-xs truncate">{album.artist_names}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
+            // Otherwise show liked/released albums
+            if (albums.length === 0) {
+              return (
+                <div className="bg-white/5 rounded-lg p-8 border border-white/20 text-center">
+                  <p className="text-gray-300 text-lg mb-2">
+                    {profile?.spotify_connection?.artist_id 
+                      ? 'No albums released yet' 
+                      : 'No liked albums yet'}
+                  </p>
+                  <p className="text-gray-400 text-sm">
+                    {profile?.spotify_connection?.artist_id
+                      ? 'You haven\'t posted any albums, singles, or EPs on Spotify yet. Once you release music on Spotify, it will appear here.'
+                      : 'You haven\'t saved any albums to your Spotify library yet. Like albums on Spotify to see them here.'}
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                {albums.map((album) => (
                 <div
                   key={album.spotify_id}
                   className="bg-white/5 rounded-lg p-4 border border-white/20 hover:border-spotify-green transition-colors cursor-pointer"
@@ -149,9 +304,10 @@ const MusicShowcaseManager = ({ profile, onUpdate }) => {
                   <p className="text-white font-medium text-sm truncate">{album.item_name}</p>
                   <p className="text-gray-400 text-xs truncate">{album.artist_names}</p>
                 </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            );
+          })()}
         </div>
       )}
 

@@ -357,9 +357,135 @@ def search_artist():
             'popularity': artist.get('popularity')
         })
     
+        return jsonify({
+            'artists': formatted_artists,
+            'total': artists_data.get('total', 0)
+        }), 200
+
+@spotify_bp.route('/search-albums', methods=['GET'])
+@jwt_required()
+def search_albums():
+    """
+    Search for Albums
+    Search for albums by title across all of Spotify
+    ---
+    tags:
+      - Spotify
+    security:
+      - Bearer: []
+    parameters:
+      - in: query
+        name: q
+        type: string
+        required: true
+        description: Album title to search for
+        example: Abbey Road
+      - in: query
+        name: limit
+        type: integer
+        required: false
+        default: 50
+        description: Maximum number of results to return
+      - in: query
+        name: offset
+        type: integer
+        required: false
+        default: 0
+        description: Offset for pagination
+    responses:
+      200:
+        description: Albums found successfully
+        schema:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  spotify_id:
+                    type: string
+                  item_type:
+                    type: string
+                  item_name:
+                    type: string
+                  artist_names:
+                    type: string
+                  image_url:
+                    type: string
+                  spotify_url:
+                    type: string
+                  release_date:
+                    type: string
+                  total_tracks:
+                    type: integer
+            total:
+              type: integer
+      401:
+        description: Spotify not connected or unauthorized
+      400:
+        description: Missing search query
+    """
+    current_user_id = get_jwt_identity()
+    
+    # Get valid access token
+    access_token = SpotifyService.get_valid_access_token(current_user_id)
+    
+    if not access_token:
+        return jsonify({'error': 'Spotify not connected. Please connect your Spotify account first.'}), 401
+    
+    # Get query parameters
+    query = request.args.get('q')
+    limit = request.args.get('limit', 50, type=int)
+    offset = request.args.get('offset', 0, type=int)
+    
+    if not query:
+        return jsonify({'error': 'Search query (q) is required'}), 400
+    
+    # Search for albums using service
+    albums_data = SpotifyService.search_albums(access_token, query, limit=limit, offset=offset)
+    
+    if not albums_data:
+        return jsonify({'error': 'Failed to search for albums'}), 500
+    
+    albums = albums_data.get('items', [])
+    
+    # Format response to match user-albums format
+    formatted_albums = []
+    for album in albums:
+        # Determine item type
+        album_type = album.get('album_type', 'album')
+        if album_type == 'single':
+            item_type = 'single'
+        elif album_type == 'ep':
+            item_type = 'ep'
+        else:
+            item_type = 'album'
+        
+        # Get artist names
+        artists = album.get('artists', [])
+        artist_names = ', '.join([artist.get('name', '') for artist in artists])
+        
+        # Get images
+        images = album.get('images', [])
+        image_url = images[0].get('url', '') if images else None
+        
+        formatted_albums.append({
+            'spotify_id': album.get('id'),
+            'item_type': item_type,
+            'item_name': album.get('name', ''),
+            'artist_names': artist_names,
+            'image_url': image_url,
+            'spotify_url': album.get('external_urls', {}).get('spotify', ''),
+            'release_date': album.get('release_date', ''),
+            'total_tracks': album.get('total_tracks', 0)
+        })
+    
     return jsonify({
-        'artists': formatted_artists,
-        'total': artists_data.get('total', 0)
+        'items': formatted_albums,
+        'total': albums_data.get('total', 0),
+        'limit': limit,
+        'offset': offset
     }), 200
 
 @spotify_bp.route('/user-albums', methods=['GET'])

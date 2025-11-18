@@ -245,17 +245,48 @@ const PublicProfile = () => {
           <div className="mb-6 sm:mb-8">
             <h2 className="text-lg sm:text-xl font-semibold text-primary-light mb-3 sm:mb-4">Connect</h2>
             <div className="space-y-2 sm:space-y-3">
-              {social_links.map((link) => (
-                <a
-                  key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full py-3 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-primary/20 to-accent/20 hover:from-primary/30 hover:to-accent/30 border border-primary/40 rounded-xl text-white font-medium transition-all text-center hover:border-primary/60 hover:shadow-glow active:scale-[0.98]"
-                >
-                  {link.display_text || link.platform}
-                </a>
-              ))}
+              {social_links.map((link) => {
+                const handleClick = (e) => {
+                  // Track click using fetch with keepalive (works even when page unloads)
+                  const linkId = link.id;
+                  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000/api';
+                  const url = `${apiBaseUrl}/social-links/${linkId}/click`;
+                  
+                  // Use fetch with keepalive to ensure request completes even if page navigates
+                  fetch(url, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({}),
+                    keepalive: true, // Ensures request continues even if page unloads
+                  })
+                  .then(response => {
+                    if (!response.ok) {
+                      console.error('Click tracking failed:', response.status, response.statusText);
+                    } else {
+                      console.log('Click tracked successfully for link:', linkId);
+                    }
+                  })
+                  .catch(err => {
+                    // Log error for debugging
+                    console.error('Failed to track click:', err);
+                  });
+                };
+
+                return (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleClick}
+                    className="block w-full py-3 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-primary/20 to-accent/20 hover:from-primary/30 hover:to-accent/30 border border-primary/40 rounded-xl text-white font-medium transition-all text-center hover:border-primary/60 hover:shadow-glow active:scale-[0.98]"
+                  >
+                    {link.display_text || link.platform}
+                  </a>
+                );
+              })}
             </div>
           </div>
         )}

@@ -98,12 +98,14 @@ def create_app(config_name='default'):
     from app.routes.profiles import profiles_bp
     from app.routes.social_links import social_links_bp
     from app.routes.music_showcase import music_showcase_bp
+    from app.routes.admin import admin_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(spotify_bp, url_prefix='/api/spotify')
     app.register_blueprint(profiles_bp, url_prefix='/api/profiles')
     app.register_blueprint(social_links_bp, url_prefix='/api/social-links')
     app.register_blueprint(music_showcase_bp, url_prefix='/api/music-showcase')
+    app.register_blueprint(admin_bp, url_prefix='/api/admin')
     
     # Serve uploaded avatar files
     @app.route('/api/uploads/avatars/<filename>', methods=['GET'])

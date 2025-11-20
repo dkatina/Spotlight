@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from functools import wraps
 from app import db
-from app.models import User, UserProfile, SocialLink, MusicShowcase, SpotifyConnection
+from app.models import User, UserProfile, SocialLink, MusicShowcase, SpotifyConnection, ProfileClick
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -39,19 +39,17 @@ def get_stats():
     """
     try:
         total_users = User.query.count()
-        total_profiles = UserProfile.query.count()
         total_social_links = SocialLink.query.count()
         total_showcase_items = MusicShowcase.query.count()
         total_spotify_connections = SpotifyConnection.query.count()
-        public_profiles = UserProfile.query.filter_by(is_public=True).count()
+        total_profile_clicks = ProfileClick.query.count()
         
         return jsonify({
             'total_users': total_users,
-            'total_profiles': total_profiles,
             'total_social_links': total_social_links,
             'total_showcase_items': total_showcase_items,
             'total_spotify_connections': total_spotify_connections,
-            'public_profiles': public_profiles
+            'total_profile_clicks': total_profile_clicks
         }), 200
     except Exception as e:
         return jsonify({'error': 'Failed to retrieve statistics', 'details': str(e)}), 500

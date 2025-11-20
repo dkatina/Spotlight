@@ -12,7 +12,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app import create_app, db
-from app.models import User, UserProfile, SocialLink, SpotifyConnection, MusicShowcase
+from app.models import User, UserProfile, SocialLink, SpotifyConnection, MusicShowcase, ProfileClick
 
 # this is the Alembic Config object
 config = context.config

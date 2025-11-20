@@ -127,12 +127,8 @@ const Admin = () => {
                   <div className="text-2xl font-bold text-primary-light">{stats.total_users}</div>
                 </div>
                 <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                  <div className="text-gray-400 text-sm mb-1">Total Profiles</div>
-                  <div className="text-2xl font-bold text-primary-light">{stats.total_profiles}</div>
-                </div>
-                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                  <div className="text-gray-400 text-sm mb-1">Public Profiles</div>
-                  <div className="text-2xl font-bold text-primary-light">{stats.public_profiles}</div>
+                  <div className="text-gray-400 text-sm mb-1">User Link Clicks</div>
+                  <div className="text-2xl font-bold text-primary-light">{stats.total_profile_clicks}</div>
                 </div>
                 <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                   <div className="text-gray-400 text-sm mb-1">Social Links</div>

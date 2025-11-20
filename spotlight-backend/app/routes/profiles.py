@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
-from app.models import User, UserProfile, SocialLink, MusicShowcase
+from app.models import User, UserProfile, SocialLink, MusicShowcase, ProfileClick
 from app.utils import validate_url
 import os
 import uuid
@@ -92,6 +92,33 @@ def get_public_profile(username):
     
     # Get music showcase
     showcase_items = [item.to_dict() for item in user.music_showcase.order_by(MusicShowcase.position).all()]
+    
+    # Track profile click (with deduplication to prevent React Strict Mode double-tracking)
+    try:
+        from datetime import datetime, timedelta
+        
+        # Check for recent click from same IP/user within last 5 seconds (prevents React Strict Mode duplicates)
+        recent_threshold = datetime.utcnow() - timedelta(seconds=5)
+        recent_click = ProfileClick.query.filter(
+            ProfileClick.user_id == user.id,
+            ProfileClick.ip_address == request.remote_addr,
+            ProfileClick.clicked_at >= recent_threshold
+        ).first()
+        
+        # Only track if no recent click exists
+        if not recent_click:
+            click = ProfileClick(
+                user_id=user.id,
+                ip_address=request.remote_addr,
+                user_agent=request.headers.get('User-Agent', ''),
+                referer=request.headers.get('Referer', '')
+            )
+            db.session.add(click)
+            db.session.commit()
+    except Exception as e:
+        # Don't fail the request if tracking fails
+        db.session.rollback()
+        current_app.logger.error(f'Failed to track profile click: {e}')
     
     return jsonify({
         'username': user.username,

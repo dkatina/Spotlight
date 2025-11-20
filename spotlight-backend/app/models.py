@@ -20,6 +20,7 @@ class User(db.Model):
     social_links = db.relationship('SocialLink', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     spotify_connection = db.relationship('SpotifyConnection', backref='user', uselist=False, cascade='all, delete-orphan')
     music_showcase = db.relationship('MusicShowcase', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    profile_clicks = db.relationship('ProfileClick', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     
     def set_password(self, password):
         """Hash and set password"""
@@ -150,5 +151,27 @@ class MusicShowcase(db.Model):
             'spotify_url': self.spotify_url,
             'position': self.position,
             'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+class ProfileClick(db.Model):
+    """Profile click tracking model"""
+    __tablename__ = 'profile_clicks'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    clicked_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    ip_address = db.Column(db.String(45))  # IPv6 can be up to 45 chars
+    user_agent = db.Column(db.String(500))
+    referer = db.Column(db.String(500))
+    
+    def to_dict(self):
+        """Convert click to dictionary"""
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'clicked_at': self.clicked_at.isoformat() if self.clicked_at else None,
+            'ip_address': self.ip_address,
+            'user_agent': self.user_agent,
+            'referer': self.referer
         }
 

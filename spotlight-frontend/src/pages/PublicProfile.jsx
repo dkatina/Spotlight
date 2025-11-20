@@ -15,8 +15,11 @@ const PublicProfile = () => {
   const [dragOffset, setDragOffset] = useState(0);
   const carouselRef = useRef(null);
   const autoPlayIntervalRef = useRef(null);
+  const hasTrackedClick = useRef(false);
 
   useEffect(() => {
+    // Reset tracking flag when username changes
+    hasTrackedClick.current = false;
     fetchProfile();
     setCurrentSlide(0); // Reset to first slide when profile changes
     setIsAutoPlaying(false); // Stop autoplay when profile changes

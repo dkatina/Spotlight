@@ -221,7 +221,7 @@ const PublicProfile = () => {
   const avatarUrl = getAvatarUrl();
 
   return (
-    <div className="min-h-screen bg-gradient-dark">
+    <div className="min-h-screen bg-gradient-dark overflow-x-hidden">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
@@ -245,55 +245,24 @@ const PublicProfile = () => {
           <div className="mb-6 sm:mb-8">
             <h2 className="text-lg sm:text-xl font-semibold text-primary-light mb-3 sm:mb-4">Connect</h2>
             <div className="space-y-2 sm:space-y-3">
-              {social_links.map((link) => {
-                const handleClick = (e) => {
-                  // Track click using fetch with keepalive (works even when page unloads)
-                  const linkId = link.id;
-                  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000/api';
-                  const url = `${apiBaseUrl}/social-links/${linkId}/click`;
-                  
-                  // Use fetch with keepalive to ensure request completes even if page navigates
-                  fetch(url, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({}),
-                    keepalive: true, // Ensures request continues even if page unloads
-                  })
-                  .then(response => {
-                    if (!response.ok) {
-                      console.error('Click tracking failed:', response.status, response.statusText);
-                    } else {
-                      console.log('Click tracked successfully for link:', linkId);
-                    }
-                  })
-                  .catch(err => {
-                    // Log error for debugging
-                    console.error('Failed to track click:', err);
-                  });
-                };
-
-                return (
-                  <a
-                    key={link.id}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={handleClick}
-                    className="block w-full py-3 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-primary/20 to-accent/20 hover:from-primary/30 hover:to-accent/30 border border-primary/40 rounded-xl text-white font-medium transition-all text-center hover:border-primary/60 hover:shadow-glow active:scale-[0.98]"
-                  >
-                    {link.display_text || link.platform}
-                  </a>
-                );
-              })}
+              {social_links.map((link) => (
+                <a
+                  key={link.id}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full py-3 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-primary/20 to-accent/20 hover:from-primary/30 hover:to-accent/30 border border-primary/40 rounded-xl text-white font-medium transition-all text-center hover:border-primary/60 hover:shadow-glow active:scale-[0.98]"
+                >
+                  {link.display_text || link.platform}
+                </a>
+              ))}
             </div>
           </div>
         )}
 
         {/* Music Showcase Carousel */}
         {music_showcase && music_showcase.length > 0 && (
-          <div>
+          <div className="overflow-hidden">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <h2 className="text-lg sm:text-xl font-semibold text-primary-light">Music</h2>
               {music_showcase.length > 1 && (
@@ -324,7 +293,7 @@ const PublicProfile = () => {
               )}
             </div>
             <div 
-              className="relative group touch-none select-none"
+              className="relative group touch-none select-none overflow-hidden"
               ref={carouselRef}
               onTouchStart={onTouchStart}
               onTouchMove={onTouchMove}
@@ -349,7 +318,7 @@ const PublicProfile = () => {
                       key={item.id} 
                       className="min-w-full flex-shrink-0 p-3 sm:p-4 md:p-6"
                     >
-                      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-white/5 via-primary/5 to-accent/5 backdrop-blur-sm border border-primary/20 hover:border-primary/50 transition-all duration-300 hover:shadow-glow">
+                      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-white/5 via-primary/5 to-accent/5 backdrop-blur-sm border border-primary/20 hover:border-primary/50 transition-colors duration-300">
                         <div 
                           className="absolute inset-0 z-10"
                           style={{ 

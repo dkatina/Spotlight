@@ -18,6 +18,16 @@ def create_app(config_name='default'):
     # Load configuration
     app.config.from_object(config[config_name])
     
+    # Filter out OPTIONS requests from access logs (CORS preflight)
+    import logging
+    log = logging.getLogger('werkzeug')
+    
+    class FilterOPTIONS(logging.Filter):
+        def filter(self, record):
+            return 'OPTIONS' not in record.getMessage()
+    
+    log.addFilter(FilterOPTIONS())
+    
     # Initialize extensions
     db.init_app(app)
     jwt.init_app(app)

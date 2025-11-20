@@ -1,7 +1,7 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
-from app.models import SocialLink, LinkClick
+from app.models import SocialLink
 from app.utils import validate_url
 
 social_links_bp = Blueprint('social_links', __name__)
@@ -339,54 +339,3 @@ def reorder_social_links():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Failed to reorder links', 'details': str(e)}), 500
-
-@social_links_bp.route('/<int:link_id>/click', methods=['POST'])
-def track_link_click(link_id):
-    """
-    Track Link Click
-    Record a click on a social link (public endpoint, no auth required)
-    ---
-    tags:
-      - Social Links
-    parameters:
-      - in: path
-        name: link_id
-        type: integer
-        required: true
-        description: ID of the social link that was clicked
-    responses:
-      200:
-        description: Click tracked successfully
-        schema:
-          type: object
-          properties:
-            message:
-              type: string
-              example: Click tracked successfully
-      404:
-        description: Link not found
-    """
-    try:
-        link = SocialLink.query.get(link_id)
-        
-        if not link:
-            return jsonify({'error': 'Link not found'}), 404
-        
-        # Create click record
-        click = LinkClick(
-            social_link_id=link_id,
-            user_id=link.user_id
-        )
-        
-        db.session.add(click)
-        db.session.commit()
-        
-        # Log successful tracking (optional, for debugging)
-        current_app.logger.info(f'Link click tracked: link_id={link_id}, user_id={link.user_id}')
-        
-        return jsonify({'message': 'Click tracked successfully'}), 200
-    except Exception as e:
-        db.session.rollback()
-        # Log error for debugging
-        current_app.logger.error(f'Failed to track click: {str(e)}', exc_info=True)
-        return jsonify({'error': 'Failed to track click', 'details': str(e)}), 500

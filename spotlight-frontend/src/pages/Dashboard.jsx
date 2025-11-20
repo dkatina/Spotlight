@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import ProfileSetup from '../components/dashboard/ProfileSetup';
@@ -7,11 +6,8 @@ import SpotifyConnection from '../components/dashboard/SpotifyConnection';
 import SocialLinksManager from '../components/dashboard/SocialLinksManager';
 import MusicShowcaseManager from '../components/dashboard/MusicShowcaseManager';
 
-const ADMIN_EMAIL = 'dylankatina@gmail.com';
-
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
   const [profile, setProfile] = useState(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(true);
@@ -57,13 +53,13 @@ const Dashboard = () => {
               <p className="text-primary-light text-xs sm:text-sm">Welcome, <span className="text-accent font-semibold">{user?.username}</span></p>
             </div>
             <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  className="text-xs sm:text-sm text-accent hover:text-accent/80 font-medium transition-colors px-2 py-1 rounded-lg hover:bg-white/5"
+              {user?.is_admin && (
+                <a
+                  href="/admin"
+                  className="text-xs sm:text-sm text-accent hover:text-accent/80 font-medium transition-colors"
                 >
-                  Admin Panel
-                </Link>
+                  Admin Dashboard
+                </a>
               )}
               {profile?.profile?.is_public && (
                 <a

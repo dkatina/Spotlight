@@ -11,6 +11,7 @@ class User(db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
     username = db.Column(db.String(50), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -34,6 +35,7 @@ class User(db.Model):
             'id': self.id,
             'email': self.email,
             'username': self.username,
+            'is_admin': self.is_admin,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
@@ -148,27 +150,5 @@ class MusicShowcase(db.Model):
             'spotify_url': self.spotify_url,
             'position': self.position,
             'created_at': self.created_at.isoformat() if self.created_at else None
-        }
-
-class LinkClick(db.Model):
-    """Link click tracking model"""
-    __tablename__ = 'link_clicks'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    social_link_id = db.Column(db.Integer, db.ForeignKey('social_links.id', ondelete='CASCADE'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
-    clicked_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    social_link = db.relationship('SocialLink', backref='clicks')
-    user = db.relationship('User', backref='link_clicks')
-    
-    def to_dict(self):
-        """Convert link click to dictionary"""
-        return {
-            'id': self.id,
-            'social_link_id': self.social_link_id,
-            'user_id': self.user_id,
-            'clicked_at': self.clicked_at.isoformat() if self.clicked_at else None
         }
 

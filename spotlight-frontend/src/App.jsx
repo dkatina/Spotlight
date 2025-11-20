@@ -6,9 +6,9 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Admin from './pages/Admin';
 import PublicProfile from './pages/PublicProfile';
 import SpotifyCallback from './pages/SpotifyCallback';
-import Admin from './pages/Admin';
 
 function App() {
   return (
@@ -27,19 +27,19 @@ function App() {
             }
           />
           <Route
-            path="/auth/spotify/callback"
-            element={
-              <ProtectedRoute>
-                <SpotifyCallback />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/admin"
             element={
               <AdminRoute>
                 <Admin />
               </AdminRoute>
+            }
+          />
+          <Route
+            path="/auth/spotify/callback"
+            element={
+              <ProtectedRoute>
+                <SpotifyCallback />
+              </ProtectedRoute>
             }
           />
           <Route path="/:username" element={<PublicProfile />} />

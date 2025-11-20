@@ -245,11 +245,11 @@ const MusicShowcaseManager = ({ profile, onUpdate }) => {
                   <p className="text-primary-light text-xs sm:text-sm mb-3 sm:mb-4">
                     Search results for "<span className="text-accent">{searchQuery}</span>" ({searchResults.length} found)
                   </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-h-96 overflow-y-auto">
+                  <div className="p-1 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-h-96 overflow-y-auto">
                     {searchResults.map((album) => (
                       <div
                         key={album.spotify_id}
-                        className="bg-gradient-to-br from-white/5 via-primary/5 to-accent/5 rounded-xl p-3 sm:p-4 border border-primary/20 hover:border-primary/60 transition-all cursor-pointer hover:shadow-glow hover:scale-[1.02] active:scale-[0.98]"
+                        className="bg-gradient-to-br from-white/5 via-primary/5 to-accent/5 rounded-xl p-3 sm:p-4 border border-primary/20 hover:border-primary/60 transition-all cursor-pointer hover:shadow-glow hover:scale-[1.01] active:scale-[0.98]"
                         onClick={() => setSelectedAlbum(album)}
                       >
                         {album.image_url && (
@@ -287,7 +287,7 @@ const MusicShowcaseManager = ({ profile, onUpdate }) => {
             }
 
             return (
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-h-96 overflow-y-auto">
+              <div className="p-1 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-h-96 overflow-y-auto">
                 {albums.map((album) => (
                 <div
                   key={album.spotify_id}
